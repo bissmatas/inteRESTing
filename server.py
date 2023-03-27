@@ -5,16 +5,18 @@ except ImportError:
     import SimpleHTTPServer as server
 
 def diff_get_flag(httpd):
+    print(httpd.path)
     return httpd.path == "/flag"
 
 def diff_get_with_header(httpd):
     return httpd.path == "/flag" and httpd.headers.get("Is-Matas", "") == "True"
 
-DEFAULT_GET_DIFFICULTY = diff_get_with_header
-GET_DIFFICULTY = {'127.0.0.1': diff_get_with_header}
+DEFAULT_GET_DIFFICULTY = {'127.0.0.1': diff_get_flag}
+ADVANCED_GET_DIFFICULTY = {'127.0.0.1': diff_get_with_header}
 POST_FLAG = "' is a POST trophy"
 
-GET_FLAG = "tarGET"
+DEFAULT_GET_FLAG = "Matas"
+ADVANCED_GET_FLAG = "IS"
 
 def parse_post_from_httpd(httpd):
     content_length = int(httpd.headers['Content-Length'])
@@ -31,9 +33,8 @@ def post_diff_name_and_pass(httpd):
     except:
         return False
 
-DEFAULT_POST_DIFFICULTY = post_diff_name_and_pass
-POST_DIFFICULTY = {'127.0.0.1': post_diff_name_and_pass}
-POST_FLAG = "' is a POST trophy"
+DEFAULT_POST_DIFFICULTY = {'127.0.0.1': post_diff_name_and_pass}
+POST_FLAG = "C00L"
 
 FAIL_FLAG = "failed!"
 
@@ -44,30 +45,38 @@ class HTTPRequestHandler(server.BaseHTTPRequestHandler):
 
     def do_POST(self):
         print("Received POST request from hanich at", self.client_address[0])
-        if POST_DIFFICULTY.get(self.client_address[0], DEFAULT_POST_DIFFICULTY)(self): 
+        if DEFAULT_POST_DIFFICULTY.get(self.client_address[0], post_diff_name_and_pass)(self):
             print("POST challange solved by hanich at", self.client_address[0])
+            self.protocol_version = "HTTP/1.1"
             self.send_response(server.HTTPStatus.OK)
             self.wfile.write(bytes(POST_FLAG + '\n', "ascii"))
         else:
             print("POST challange failed by hanich at", self.client_address[0])
+            self.protocol_version = "HTTP/1.1"
             self.send_response(server.HTTPStatus.BAD_REQUEST)
             self.wfile.write(bytes(FAIL_FLAG + '\n', "ascii"))
 
     def do_GET(self):
         print("Received GET request from hanich at", self.client_address[0])
-        if GET_DIFFICULTY.get(self.client_address[0], DEFAULT_GET_DIFFICULTY)(self): 
-            print("GET challange solved by hanich at", self.client_address[0])
+        if ADVANCED_GET_DIFFICULTY.get(self.client_address[0], diff_get_with_header)(self):
+            print("Received GET request from hanich at", self.client_address[0])
+            self.protocol_version = "HTTP/1.1"
             self.send_response(server.HTTPStatus.OK)
-            self.wfile.write(bytes(GET_FLAG + '\n', "ascii"))
+            self.wfile.write(bytes(ADVANCED_GET_FLAG + '\n', "ascii"))
+        elif DEFAULT_GET_DIFFICULTY.get(self.client_address[0], diff_get_flag)(self):
+            print("GET challange solved by hanich at", self.client_address[0])
+            self.protocol_version = "HTTP/1.1"
+            self.send_response(server.HTTPStatus.OK)
+            self.wfile.write(bytes(DEFAULT_GET_FLAG + '\n', "ascii"))
         else:
             print("GET challange failed by hanich at", self.client_address[0])
+            self.protocol_version = "HTTP/1.1"
             self.send_response(server.HTTPStatus.BAD_REQUEST)
             self.wfile.write(bytes(FAIL_FLAG + '\n', "ascii"))
 
-PORT = 8080
+PORT = 62000
 Handler = HTTPRequestHandler
 
 with server.HTTPServer(("", PORT), Handler) as httpd:
     print("serving at port", PORT)
     httpd.serve_forever()
-
