@@ -74,7 +74,7 @@ class HTTPRequestHandler(server.BaseHTTPRequestHandler):
             self.send_response(server.HTTPStatus.BAD_REQUEST)
             self.wfile.write(bytes(FAIL_FLAG + '\n', "ascii"))
 
-PORT = 62000
+PORT = 62000  # open port
 Handler = HTTPRequestHandler
 
 with server.HTTPServer(("", PORT), Handler) as httpd:
